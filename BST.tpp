@@ -10,42 +10,24 @@
 #include "iomanip"
 #include "ctime"
 
-// to improve readability in the code
 template <typename T>
-using ParentNode = Node<T>;
-
+using ParentNode = Node<T>;  // For better readability
 template <typename T>
-using CurrentNode = Node<T>;
+using CurrentNode = Node<T>; // For better readability
 
-
+// ########## Helpers ##########
+// High-Level Helpers
 template<typename T>
-BST<T>::BST()
-:root{nullptr}, size{0}{}
-
-template<typename T>
-BST<T>::BST(std::initializer_list<T> &list): BST() {
-    int *indexes = new int[list.size()];
-    for(int i = 0 ; i < list.size(); i++){
-        indexes[i] = i;
-    }
-    shuffleRandomized(indexes, list.size());
-    for(int i = 0 ; i < list.size(); i++){
-        insert(list[indexes[i]]);
+void BST<T>::swap(std::pair<ParentNode *, CurrentNode *> &p1, std::pair<ParentNode *, CurrentNode *> &p2) {
+    // !(node1 == node2Parent  ||     node2 == node1Parent ) => At least one of them needs to be true to have a Parent-child
+    if(!(p1.second == p2.first || p2.second == p1.first)){
+        // Parent-Child swap
+        swapIndependentNodes(p1, p2);
+    } else {
+        // Independent Nodes swap
+        swapParentChildNodes(p1,p2);
     }
 }
-
-template<typename T>
-BST<T>::BST(const T *arr, int size): BST() {
-    int *indexes = new int[size];
-    for(int i = 0 ; i < size; i++){
-        indexes[i] = i;
-    }
-    shuffleRandomized(indexes, size);
-    for(int i = 0 ; i < size; i++){
-        insert(arr[indexes[i]]);
-    }
-}
-
 
 template<typename T>
 void BST<T>::shuffleRandomized(int *arr, int size){
@@ -59,72 +41,52 @@ void BST<T>::shuffleRandomized(int *arr, int size){
     }
 }
 
-// PUBLIC INTERFACE
+/**
+ * returns a pointer to the parent node of the node could hold data.
+ * @param data data of the node.
+ * @return std::pair<parentNode, currentNode>
+ */
 template<typename T>
-bool BST<T>::insert(const T &data) {
-    if(!root){
-        root = new Node<T>(data);
-        size++;
-    } else{
-        std::pair<ParentNode *, CurrentNode *> p= findParent(data);
-        if(p.second){ // the node exists in the tree.
-            return false;
+std::pair<ParentNode<T>*, CurrentNode<T>*> BST<T>::findParent(const T &data) const{
+    Node<T> *parent = nullptr;
+    Node<T> *cur = root;
+    while(cur){
+        if(data > cur->data){
+            parent = cur;
+            cur = cur->right;
+        } else if(data < cur->data){
+            parent = cur;
+            cur = cur->left;
+        } else { // cur->data == data
+            break;
         }
-        if(data > p.first->data){
-            p.first->right = new Node<T>(data);
-        } else {
-            p.first->left = new Node<T>(data);
-        }
-        size++;
     }
-    return true;
+    return std::pair(parent, cur);
 }
 
 template<typename T>
-bool BST<T>::remove(const T &data) {
-    std::pair<ParentNode *, CurrentNode *> nodePair = findParent(data);
-    auto &node = nodePair.second;
-    auto &nodeParent = nodePair.first;
-
-    if(!node){ // node not in the tree.
-        return false;
+std::pair<ParentNode<T>*, CurrentNode<T>*> BST<T>::findBottomDownInOrderSuccessor(Node<T> *node) const{
+    const Node<T> *parent = node;
+    const Node<T> *cur = node->right;
+    while(cur && cur->left){
+        cur = cur->left;
     }
-
-    std::pair<ParentNode *, CurrentNode *> predPair = findBottomDownInOrderPredecessor(node);
-    auto &predecessor = predPair.second;
-
-    //while predecessorNode exists
-    while(predecessor){
-        swap(nodePair, predPair); // swap the node with its predecessor
-        //                                        node
-        predPair = findBottomDownInOrderPredecessor(node); // find the predecessor of the swapped node.
-    }
-    // by here, we know for sure that node->left is null
-    if(nodeParent) { // if we are not deleting the very last node
-        if(nodeParent->left == node){
-            nodeParent->left = node->right;
-        }else {
-            nodeParent->right = node->right;
-        }
-    }else { // the node being deleted is the root, and root->left is null
-        root = node->right;
-    }
-    delete node;
-    size--;
-    return true;
+    return std::pair(parent, cur);
 }
 
 template<typename T>
-void BST<T>::swap(std::pair<ParentNode *, CurrentNode *> &p1, std::pair<ParentNode *, CurrentNode *> &p2) {
-    // !(node1 == node2Parent  ||     node2 == node1Parent ) => At least one of them needs to be true to have a Parent-child
-    if(!(p1.second == p2.first || p2.second == p1.first)){
-        // Parent-Child swap
-        swapIndependentNodes(p1, p2);
-    } else {
-        // Independent Nodes swap
-        swapParentChildNodes(p1,p2);
+std::pair<ParentNode<T>*, CurrentNode<T>*> BST<T>::findBottomDownInOrderPredecessor(Node<T>* node) const{
+    Node<T> *parent = node;
+    Node<T> *cur = node->left;
+    while(cur && cur->right){
+        parent = cur;
+        cur = cur->right;
     }
+    return std::pair(parent, cur);
 }
+
+// Low-Level Helpers
+
 
 template<typename T>
 void
@@ -195,7 +157,7 @@ template<typename T>
 void
 BST<T>::swapParentChildNodes(std::pair<ParentNode *, CurrentNode *> &p1, std::pair<ParentNode *, CurrentNode *> &p2) {
     // !(node1 == node2Parent  ||     node2 == node1Parent ) => At least one of them needs to be true to have a Parent-child
-    if(!(p1.second == p2.first || p2.second == p1.first)){ 
+    if(!(p1.second == p2.first || p2.second == p1.first)){
         return; // SafeGuard: there is not Parent-Child relationship, retuning...
     }
     // Making meaningful aliases
@@ -266,6 +228,276 @@ BST<T>::swapParentChildNodes(std::pair<ParentNode *, CurrentNode *> &p1, std::pa
 }
 
 template<typename T>
+std::vector<const Node<T> *> *BST<T>::convertToVector(const Node<T> *node) const {
+    size_t totalSpots = getMaxNodeCount(getHeight(node));
+    std::vector<const Node<T> *> *vec = new std::vector<const Node<T>*>;
+    vec->reserve(totalSpots);
+    std::queue<const Node<T>*> q;
+    q.push(node);
+    const Node<T> *cur;
+    while(totalSpots > 0){
+        cur = q.front();
+        q.push(cur ? cur->left : nullptr);
+        q.push(cur ? cur->right : nullptr);
+        vec->push_back(cur);
+        totalSpots--;
+        q.pop();
+    }
+    return vec;
+}
+
+// ########## Static Methods ##########
+template<typename T>
+inline constexpr size_t BST<T>::getMaxHeight(size_t nodeCount) {
+    return nodeCount - 1;
+}
+
+template<typename T>
+inline constexpr size_t BST<T>::getMinHeight(size_t nodeCount) {
+    return static_cast<size_t>(std::ceil(std::log2(nodeCount + 1))) - 1;
+}
+
+template<typename T>
+inline constexpr size_t BST<T>::getMaxNodeCount(size_t height) {
+    return static_cast<size_t>(std::pow(2, height + 1)) - 1;
+}
+
+template<typename T>
+inline constexpr size_t BST<T>::getMinNodeCount(size_t height) {
+    return height + 1;
+}
+
+//########## Iterator Class ##########
+// %%%% Helpers %%%%
+template<typename T>
+void BST<T>::iterator::getNext() {
+    if(!(cur_internal || !stack.empty())){
+        ptr = nullptr;
+        return;
+    }
+    while(cur_internal || !stack.empty()){
+        if(cur_internal){
+            stack.push(cur_internal);
+            cur_internal = cur_internal->left;
+        }else{
+            cur_internal = stack.top();
+            stack.pop();
+            ptr = cur_internal;
+            cur_internal = cur_internal->right;
+            break;
+        }
+    }
+}
+template<typename T>
+void BST<T>::iterator::init(const Node<T> *node, const Node<T> *root) {
+    cur_internal = root;
+    while(ptr != node){
+        getNext();
+    }
+}
+// %%%% Constructors %%%%
+template<typename T>
+BST<T>::iterator::iterator(): ptr{nullptr}, cur_internal{nullptr} {
+}
+template<typename T>
+BST<T>::iterator::iterator(const Node<T> *node, const Node<T> *root){
+    init(node, root);
+}
+
+
+// %%%% Operator Overload %%%%
+template<typename T>
+typename BST<T>::iterator &BST<T>::iterator::operator++() {
+    if(!ptr) return *this;
+    getNext();
+    return *this;
+}
+
+template<typename T>
+typename BST<T>::iterator BST<T>::iterator::operator++(int) {
+    if(!ptr) return *this;
+    BST<T>::iterator it = *this;
+    ++(*this);
+    return it;
+}
+
+template<typename T>
+bool BST<T>::iterator::operator!=(const BST<T>::iterator &rhs) const {
+    return ptr != rhs.ptr;
+}
+
+template<typename T>
+const T &BST<T>::iterator::operator*() const {
+    return ptr->data;
+}
+
+// ########## Reverse Iterator Class ##########
+// %%%% Helpers (override) %%%%
+
+template<typename T>
+void BST<T>::reverse_iterator::init(const Node<T> *node, const Node<T> *root) {
+    BST<T>::iterator::cur_internal = root;
+    while(BST<T>::iterator::ptr != node){
+        getNext();
+    }
+}
+
+template<typename T>
+void BST<T>::reverse_iterator::getNext() {
+    auto &cur_internal = BST<T>::iterator::cur_internal;
+    auto &ptr = BST<T>::iterator::ptr;
+    auto &stack = BST<T>::iterator::stack;
+
+    if(!(cur_internal || !stack.empty())){
+        ptr = nullptr;
+        return;
+    }
+    while(cur_internal || !stack.empty()){
+        if(cur_internal){
+            stack.push(cur_internal);
+            cur_internal = cur_internal->right;
+        }else{
+            cur_internal = stack.top();
+            stack.pop();
+            ptr = cur_internal;
+            cur_internal = cur_internal->left;
+            break;
+        }
+    }
+}
+
+// %%%% Constructors %%%%
+template<typename T>
+BST<T>::reverse_iterator::reverse_iterator(): iterator() {}
+template<typename T>
+BST<T>::reverse_iterator::reverse_iterator(const Node<T> *node, const Node<T> *root) {
+    init(node, root);
+}
+
+
+template<typename T>
+typename BST<T>::iterator BST<T>::begin() const {
+    return BST<T>::iterator(getMin(root), root);
+}
+
+template<typename T>
+const typename BST<T>::iterator BST<T>::end() const {
+    return iterator();
+}
+
+template<typename T>
+typename BST<T>::reverse_iterator BST<T>::rbegin() const {
+    return BST<T>::reverse_iterator(getMax(root), root);
+}
+
+template<typename T>
+const typename BST<T>::reverse_iterator BST<T>::rend() const {
+    return reverse_iterator();
+}
+
+
+// ########## Constructor, Destructor, Copy/Move Semantics ##########
+template<typename T>
+BST<T>::BST() :root{nullptr}, size{0}{}
+
+template<typename T>
+BST<T>::BST(std::initializer_list<T> &list): BST() {
+    int *indexes = new int[list.size()];
+    for(int i = 0 ; i < list.size(); i++){
+        indexes[i] = i;
+    }
+    shuffleRandomized(indexes, list.size());
+    for(int i = 0 ; i < list.size(); i++){
+        insert(list[indexes[i]]);
+    }
+}
+
+template<typename T>
+BST<T>::BST(const T *arr, int size): BST() {
+    int *indexes = new int[size];
+    for(int i = 0 ; i < size; i++){
+        indexes[i] = i;
+    }
+    shuffleRandomized(indexes, size);
+    for(int i = 0 ; i < size; i++){
+        insert(arr[indexes[i]]);
+    }
+}
+
+// ########## Iterative Interface ##########
+template<typename T>
+bool BST<T>::insert(const T &data) {
+    if(!root){
+        root = new Node<T>(data);
+        size++;
+    } else{
+        std::pair<ParentNode *, CurrentNode *> p= findParent(data);
+        auto &parent = p.first;
+        auto &node = p.second;
+        if(node){ // the node exists in the tree.
+            return false;
+        }
+        if(data > parent->data){
+            parent->right = new Node<T>(data);
+        } else {
+            parent->left = new Node<T>(data);
+        }
+        size++;
+    }
+    return true;
+}
+
+template<typename T>
+bool BST<T>::remove(const T &data) {
+    std::pair<ParentNode *, CurrentNode *> nodePair = findParent(data);
+    auto &node = nodePair.second;
+    auto &nodeParent = nodePair.first;
+
+    if(!node){ // node not in the tree.
+        return false;
+    }
+
+    std::pair<ParentNode *, CurrentNode *> predPair = findBottomDownInOrderPredecessor(node);
+    auto &predecessor = predPair.second;
+
+    //while predecessorNode exists
+    while(predecessor){
+        swap(nodePair, predPair); // swap the node with its predecessor
+        //                                        node
+        predPair = findBottomDownInOrderPredecessor(node); // find the predecessor of the swapped node.
+    }
+    // by here, we know for sure that node->left is null
+    if(nodeParent) { // if we are not deleting the very last node
+        if(nodeParent->left == node){
+            nodeParent->left = node->right;
+        }else {
+            nodeParent->right = node->right;
+        }
+    }else { // the node being deleted is the root, and root->left is null
+        root = node->right;
+    }
+    delete node;
+    size--;
+    return true;
+}
+
+
+template<typename T>
+const Node<T> *BST<T>::search(const T& data) const {
+    Node<T> *cur = root;
+    while(cur){
+        if(data > cur->data){
+            cur = cur->right;
+        } else if(data < cur->data){
+            cur = cur->left;
+        } else { // cur->data == data
+            break;
+        }
+    }
+    return cur;
+}
+
+template<typename T>
 const Node<T> *BST<T>::getSuccessor(const Node<T> *node) const{
     if(!node) return nullptr;
     if(node->right){
@@ -314,39 +546,9 @@ const Node<T> *BST<T>::getPredecessor(const Node<T> *node) const {
 }
 
 
-
-template<typename T>
-const Node<T> *BST<T>::search(const T& data) const {
-    Node<T> *cur = root;
-    while(cur){
-        if(data > cur->data){
-            cur = cur->right;
-        } else if(data < cur->data){
-            cur = cur->left;
-        } else { // cur->data == data
-            break;
-        }
-    }
-    return cur;
-}
-
 template<typename T>
 size_t BST<T>::getHeight() const{
     return getHeight(root);
-}
-
-template<typename T>
-size_t BST<T>::getHeightRecursive() const{
-    return getHeightRecursive(root);
-}
-
-template<typename T>
-size_t BST<T>::getHeightRecursive(const Node<T> *node) const {
-    if(!node || (!node->left && !node->right)){
-        return 0;
-    } else {
-        return std::max(getHeightRecursive(node->left), getHeightRecursive(node->right)) + 1;
-    }
 }
 
 template<typename T>
@@ -375,6 +577,15 @@ template<typename T>
 inline constexpr size_t BST<T>::getSize() const {
     return size;
 }
+template<typename T>
+const Node<T> *BST<T>::getMax() const {
+    return getMax(root);
+}
+
+template<typename T>
+const Node<T> *BST<T>::getMin() const {
+    return getMin(root);
+}
 
 template<typename T>
 const Node<T> *BST<T>::getMax(const Node<T> *node) const {
@@ -393,37 +604,6 @@ const Node<T> *BST<T>::getMin(const Node<T> *node) const {
     }
     return node;
 }
-
-template<typename T>
-const Node<T> *BST<T>::getMax() const {
-    return getMax(root);
-}
-
-template<typename T>
-const Node<T> *BST<T>::getMin() const {
-    return getMin(root);
-}
-
-
-template<typename T>
-std::vector<const Node<T> *> *BST<T>::convertToVector(const Node<T> *node) const {
-    size_t totalSpots = getMaxNodeCount(getHeight(node));
-    std::vector<const Node<T> *> *vec = new std::vector<const Node<T>*>;
-    vec->reserve(totalSpots);
-    std::queue<const Node<T>*> q;
-    q.push(node);
-    const Node<T> *cur;
-    while(totalSpots > 0){
-        cur = q.front();
-        q.push(cur ? cur->left : nullptr);
-        q.push(cur ? cur->right : nullptr);
-        vec->push_back(cur);
-        totalSpots--;
-        q.pop();
-    }
-    return vec;
-}
-
 template<typename T>
 std::vector<const Node<T> *> *BST<T>::getPath(const T &data) const {
     std::vector<const Node<T> *> v;
@@ -443,6 +623,7 @@ std::vector<const Node<T> *> *BST<T>::getPath(const T &data) const {
     return v;
 }
 
+
 /**
  * Displays Binary tree graphically in the terminal
  * @param maxInputPrintWidth the maximum input width of the data being printed
@@ -455,7 +636,7 @@ void BST<T>::displayTree(size_t maxDataFieldPrintWidth, size_t horizontal_scale)
         if(!root){
             std::cout << "Empty Tree" << std::endl;
         } else{
-            std::cout << root->data << std::endl;
+            std::cout << *root << std::endl;
         }
         return;
     }
@@ -490,11 +671,11 @@ void BST<T>::displayTree(size_t maxDataFieldPrintWidth, size_t horizontal_scale)
             std::cout << std::left << std::setw((int) buildingBlockSize) << " "; // print the space
         } else { // Node present
             if(i & 1){ // left children are present at odd indexes
-                std::cout << std::right << std::setw((int) maxDataFieldPrintWidth) << (*vec)[i]->data // printing data
-                << std::setw((int)(buildingBlockSize - maxDataFieldPrintWidth)) << " "; // printing the space between left/right child
+                std::cout << std::right << std::setw((int) maxDataFieldPrintWidth) << *((*vec)[i]) // printing data
+                          << std::setw((int)(buildingBlockSize - maxDataFieldPrintWidth)) << " "; // printing the space between left/right child
             }else{ // right children are present at even indexes
                 // First node on the first level will be treated like a right child (index is 0)
-                std::cout << std::left << std::setw((int) buildingBlockSize) << (*vec)[i]->data; // printing data
+                std::cout << std::left << std::setw((int) buildingBlockSize) << *((*vec)[i]); // printing data
             }
         }
         i++;
@@ -543,106 +724,7 @@ void BST<T>::displayTree(size_t maxDataFieldPrintWidth, size_t horizontal_scale)
     delete vec;
 }
 
-
-// STATIC PUBLIC INTERFACE
-template<typename T>
-inline constexpr size_t BST<T>::getMaxHeight(size_t nodeCount) {
-    return nodeCount - 1;
-}
-
-template<typename T>
-inline constexpr size_t BST<T>::getMinHeight(size_t nodeCount) {
-    return static_cast<size_t>(std::ceil(std::log2(nodeCount + 1))) - 1;
-}
-
-template<typename T>
-inline constexpr size_t BST<T>::getMaxNodeCount(size_t height) {
-    return static_cast<size_t>(std::pow(2, height + 1)) - 1;
-}
-
-template<typename T>
-inline constexpr size_t BST<T>::getMinNodeCount(size_t height) {
-    return height + 1;
-}
-
-
-// HELPER METHODS
-/**
- * returns a pointer to the parent node of the node could hold data.
- * @param data data of the node.
- * @return std::pair<parentNode, currentNode>
- */
-template<typename T>
-std::pair<ParentNode<T>*, CurrentNode<T>*> BST<T>::findParent(const T &data) const{
-    Node<T> *parent = nullptr;
-    Node<T> *cur = root;
-    while(cur){
-        if(data > cur->data){
-            parent = cur;
-            cur = cur->right;
-        } else if(data < cur->data){
-            parent = cur;
-            cur = cur->left;
-        } else { // cur->data == data
-            break;
-        }
-    }
-    return std::pair(parent, cur);
-}
-
-template<typename T>
-std::pair<ParentNode<T>*, CurrentNode<T>*> BST<T>::findBottomDownInOrderPredecessor(Node<T>* node) const{
-    Node<T> *parent = node;
-    Node<T> *cur = node->left;
-    while(cur && cur->right){
-        parent = cur;
-        cur = cur->right;
-    }
-    return std::pair(parent, cur);
-}
-
-template<typename T>
-std::pair<ParentNode<T>*, CurrentNode<T>*> BST<T>::findBottomDownInOrderSuccessor(Node<T> *node) const{
-    const Node<T> *parent = node;
-    const Node<T> *cur = node->right;
-    while(cur && cur->left){
-        cur = cur->left;
-    }
-    return std::pair(parent, cur);
-}
-
-
-template<typename T>
-void BST<T>::preOrderS(const std::function<void(const Node<T> *)> &lambda) const{
-    std::stack<const Node<T> *> stack;
-    const Node<T> *cur;
-    stack.push(root);
-    while(!stack.empty()){
-        cur = stack.top();
-        lambda(cur);
-        stack.pop();
-        if(cur->right) stack.push(cur->right);
-        if(cur->left)  stack.push(cur->left);
-    }
-}
-
-template<typename T>
-void BST<T>::inOrderS(const std::function<void(const Node<T> *)> &lambda) const{
-    std::stack<const Node<T> *> stack;
-    const Node<T> *cur = root;
-    while(cur || !stack.empty()){
-        if(cur){
-            stack.push(cur);
-            cur = cur->left;
-        }else{
-            cur = stack.top();
-            stack.pop();
-            lambda(cur);
-            cur = cur->right;
-        }
-    }
-}
-
+// Iterative, Space Efficient Traversals using "Morris Traversal" Algorithm: Time O(n), Space O(1)
 template<typename T>
 void BST<T>::inOrder(const std::function<void(const Node<T> *)> &lambda){
     Node<T> *cur{root};
@@ -768,6 +850,38 @@ void BST<T>::postOrder(const std::function<void(const Node<T> *)> &lambda) {
     delete dummy;
 }
 
+// Iterative Traversals using Stack: Time O(n), Space O(log(n))
+template<typename T>
+void BST<T>::inOrderS(const std::function<void(const Node<T> *)> &lambda) const{
+    std::stack<const Node<T> *> stack;
+    const Node<T> *cur = root;
+    while(cur || !stack.empty()){
+        if(cur){
+            stack.push(cur);
+            cur = cur->left;
+        }else{
+            cur = stack.top();
+            stack.pop();
+            lambda(cur);
+            cur = cur->right;
+        }
+    }
+}
+
+template<typename T>
+void BST<T>::preOrderS(const std::function<void(const Node<T> *)> &lambda) const{
+    std::stack<const Node<T> *> stack;
+    const Node<T> *cur;
+    stack.push(root);
+    while(!stack.empty()){
+        cur = stack.top();
+        lambda(cur);
+        stack.pop();
+        if(cur->right) stack.push(cur->right);
+        if(cur->left)  stack.push(cur->left);
+    }
+}
+
 template<typename T>
 void BST<T>::postOrderS(const std::function<void(const Node<T> *)> &lambda) const{
     std::stack<const Node<T> *> stack;
@@ -779,7 +893,7 @@ void BST<T>::postOrderS(const std::function<void(const Node<T> *)> &lambda) cons
         }else{
             temp = stack.top()->right;
             if(temp){
-               cur = temp;
+                cur = temp;
             }else{
                 temp = stack.top();
                 lambda(temp);
@@ -794,126 +908,46 @@ void BST<T>::postOrderS(const std::function<void(const Node<T> *)> &lambda) cons
     }
 }
 
+
+// ########## Recursive Interface ##########
 template<typename T>
-typename BST<T>::iterator BST<T>::begin() const {
-    return BST<T>::iterator(getMin(root), root);
+size_t BST<T>::getHeightRecursive() const{
+    return getHeightRecursive(root);
 }
 
 template<typename T>
-const typename BST<T>::iterator BST<T>::end() const {
-    return iterator();
-}
-
-template<typename T>
-typename BST<T>::reverse_iterator BST<T>::rbegin() const {
-    return BST<T>::reverse_iterator(getMax(root), root);
-}
-
-template<typename T>
-const typename BST<T>::reverse_iterator BST<T>::rend() const {
-    return reverse_iterator();
-}
-
-// ITERATOR
-template<typename T>
-BST<T>::iterator::iterator(): ptr{nullptr}, cur_internal{nullptr} {
-}
-
-
-template<typename T>
-BST<T>::iterator::iterator(const Node<T> *node, const Node<T> *root){
-    init(node, root);
-}
-template<typename T>
-void BST<T>::iterator::init(const Node<T> *node, const Node<T> *root) {
-    cur_internal = root;
-    while(ptr != node){
-        getNext();
+size_t BST<T>::getHeightRecursive(const Node<T> *node) const {
+    if(!node || (!node->left && !node->right)){
+        return 0;
+    } else {
+        return std::max(getHeightRecursive(node->left), getHeightRecursive(node->right)) + 1;
     }
 }
 
 template<typename T>
-void BST<T>::iterator::getNext() {
-    if(!(cur_internal || !stack.empty())){
-        ptr = nullptr;
-        return;
-    }
-    while(cur_internal || !stack.empty()){
-        if(cur_internal){
-            stack.push(cur_internal);
-            cur_internal = cur_internal->left;
-        }else{
-            cur_internal = stack.top();
-            stack.pop();
-            ptr = cur_internal;
-            cur_internal = cur_internal->right;
-            break;
-        }
+void BST<T>::inOrderRecursive(const Node<T> *node, const std::function<void(const Node<T> *node)> &lambda) const {
+    if(node){
+        inorderTraversal(node->left, lambda);
+        lambda(node);
+        inorderTraversal(node->right, lambda);
     }
 }
 
-template<typename T>
-typename BST<T>::iterator &BST<T>::iterator::operator++() {
-    if(!ptr) return *this;
-    getNext();
-    return *this;
-}
-
 
 template<typename T>
-typename BST<T>::iterator BST<T>::iterator::operator++(int) {
-    if(!ptr) return *this;
-    BST<T>::iterator it = *this;
-    ++(*this);
-    return it;
-}
-
-
-template<typename T>
-bool BST<T>::iterator::operator!=(const BST<T>::iterator &rhs) const {
-    return ptr != rhs.ptr;
-}
-
-template<typename T>
-const T &BST<T>::iterator::operator*() const {
-    return ptr->data;
-}
-
-template<typename T>
-BST<T>::reverse_iterator::reverse_iterator(): iterator() {}
-template<typename T>
-BST<T>::reverse_iterator::reverse_iterator(const Node<T> *node, const Node<T> *root) {
-    init(node, root);
-}
-
-template<typename T>
-void BST<T>::reverse_iterator::getNext() {
-    auto &cur_internal = BST<T>::iterator::cur_internal;
-    auto &ptr = BST<T>::iterator::ptr;
-    auto &stack = BST<T>::iterator::stack;
-
-    if(!(cur_internal || !stack.empty())){
-        ptr = nullptr;
-        return;
-    }
-    while(cur_internal || !stack.empty()){
-        if(cur_internal){
-            stack.push(cur_internal);
-            cur_internal = cur_internal->right;
-        }else{
-            cur_internal = stack.top();
-            stack.pop();
-            ptr = cur_internal;
-            cur_internal = cur_internal->left;
-            break;
-        }
+void BST<T>::preOrderRecursive(const Node<T> *node, const std::function<void(const Node<T> *)> &lambda) const{
+    if(node){
+        lambda(node);
+        preorderTraversal(node->left, lambda);
+        preorderTraversal(node->right, lambda);
     }
 }
 
 template<typename T>
-void BST<T>::reverse_iterator::init(const Node<T> *node, const Node<T> *root) {
-    BST<T>::iterator::cur_internal = root;
-    while(BST<T>::iterator::ptr != node){
-        getNext();
+void BST<T>::postOrderRecursive(const Node<T> *node, const std::function<void(const Node<T>* node)> &lambda) const {
+    if(node){
+        postorderTraversal(node->left, lambda);
+        postorderTraversal(node->right, lambda);
+        lambda(node);
     }
 }

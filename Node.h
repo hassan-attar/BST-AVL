@@ -4,10 +4,11 @@
 
 #ifndef BST_NODE_H
 #define BST_NODE_H
-
+#include <iostream>
 
 template<typename T>
 class Node {
+//    friend std::ostream &operator<<(std::ostream &os, const Node<T> &node);
 public:
     Node(const T &_data);
     Node(const T &_data, Node<T> *_left, Node<T> *_right);
@@ -15,6 +16,12 @@ public:
     Node<T> *left;
     Node<T> *right;
 };
+
+template<typename T>
+std::ostream &operator<<(std::ostream &os, const Node<T> &node){
+    os << std::to_string(node.data);
+    return os;
+}
 
 #include "Node.tpp"
 
