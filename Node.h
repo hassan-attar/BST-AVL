@@ -15,11 +15,13 @@ public:
     T data;
     Node<T> *left;
     Node<T> *right;
+
+    virtual std::string toString() const;
 };
 
 template<typename T>
 std::ostream &operator<<(std::ostream &os, const Node<T> &node){
-    os << std::to_string(node.data);
+    os << node.toString();
     return os;
 }
 

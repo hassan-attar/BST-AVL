@@ -11,7 +11,7 @@
 
 template<typename T>
 class BST {
-private:
+protected:
     using ParentNode = Node<T>;
     using CurrentNode = Node<T>;  // For better readability
     Node<T> *root;
@@ -36,7 +36,7 @@ public:
     static inline constexpr size_t getMinHeight(size_t nodeCount);
     // ########## Iterator Class ##########
     class iterator {
-    protected:
+    private:
         const Node<T> *ptr;                 // pointer to the node, holding data
         const Node<T> *cur_internal;        // cur pointer in the current inorder traversal iteration
         std::stack<const Node<T> *> stack;  // stack holding pointers in the inorder traversal
@@ -81,8 +81,8 @@ public:
 
 
     // ########## Iterative Interface ##########
-    bool insert(const T &data);
-    bool remove(const T &data);
+    virtual bool insert(const T &data);
+    virtual bool remove(const T &data);
     const Node<T> *search(const T& data) const;
     const Node<T> *getSuccessor(const Node<T>* node) const;
     const Node<T> *getPredecessor(const Node<T>* node) const;
