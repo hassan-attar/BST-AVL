@@ -8,7 +8,6 @@
 
 template<typename T>
 class Node {
-//    friend std::ostream &operator<<(std::ostream &os, const Node<T> &node);
 public:
     Node(const T &_data);
     Node(const T &_data, Node<T> *_left, Node<T> *_right);
@@ -25,7 +24,18 @@ std::ostream &operator<<(std::ostream &os, const Node<T> &node){
     return os;
 }
 
-#include "Node.tpp"
+template<typename T>
+Node<T>::Node(const T &_data, Node<T> *_left, Node<T> *_right)
+        : data{_data}, left{_left}, right{_right} {}
+
+template<typename T>
+Node<T>::Node(const T &_data)
+        : Node(_data, nullptr, nullptr){}
+
+template<typename T>
+std::string Node<T>::toString() const {
+    return std::to_string(data);
+}
 
 
 #endif //BST_NODE_H
