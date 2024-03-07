@@ -10,9 +10,11 @@
 
 template<typename T>
 class AVL : public BST<T>{
-protected:
+private:
     // ########## Helpers ##########
     int getNodeHeight(const Node<T> *node);         // Getting node height utilizing height field in NodeAVL class
+    void balanceFixup(std::stack<NodeAVL<T>*> &s);
+protected:
     // Rotations
     NodeAVL<T> *rotateLeft(NodeAVL<T> *x);
     NodeAVL<T> *rotateRight(NodeAVL<T> *x);
@@ -76,35 +78,10 @@ NodeAVL<T> *AVL<T>::rightLeftImbalance(NodeAVL<T> *x) {
     return rotateLeft(x);
 }
 
-// ########## Interface (Override) ##########
 template<typename T>
-bool AVL<T>::insert(const T &data) {
-    if(!this->root){ // Empty tree case
-        BST<T>::root = new NodeAVL<T>(data);
-        BST<T>::size++;
-        return true;
-    }
-    std::stack<NodeAVL<T> *> s;
-    NodeAVL<T> *cur = static_cast<NodeAVL<T> *>(BST<T>::root);
-    while(cur && cur->data != data){
-        s.push(cur);
-        if(data > cur->data){
-            cur = static_cast<NodeAVL<T> *>(cur->right);
-        }else{
-            cur = static_cast<NodeAVL<T> *>(cur->left);
-        }
-    }
-    if(cur) return false; // duplicate detected
-
-    //Adding the node
-    if(data > s.top()->data){
-        s.top()->right = new NodeAVL<T>(data);
-    }else{
-        s.top()->left = new NodeAVL<T>(data);
-    }
-
+void AVL<T>::balanceFixup(std::stack<NodeAVL<T> *> &s) {
     int leftHeight, rightHeight, balanceFactor;
-    NodeAVL<T> *child, *temp;
+    NodeAVL<T> *child, *temp, *cur;
     while(true){
         cur = s.top();
         s.pop();
@@ -146,13 +123,102 @@ bool AVL<T>::insert(const T &data) {
         }
     }
     this->root = temp;
+}
+
+// ########## Interface (Override) ##########
+template<typename T>
+bool AVL<T>::insert(const T &data) {
+    if(!this->root){ // Empty tree case
+        BST<T>::root = new NodeAVL<T>(data);
+        BST<T>::size++;
+        return true;
+    }
+    std::stack<NodeAVL<T> *> s;
+    NodeAVL<T> *cur = static_cast<NodeAVL<T> *>(BST<T>::root);
+    while(cur && cur->data != data){
+        s.push(cur);
+        if(data > cur->data){
+            cur = static_cast<NodeAVL<T> *>(cur->right);
+        }else{
+            cur = static_cast<NodeAVL<T> *>(cur->left);
+        }
+    }
+    if(cur) return false; // duplicate detected
+
+    //Adding the node
+    if(data > s.top()->data){
+        s.top()->right = new NodeAVL<T>(data);
+    }else{
+        s.top()->left = new NodeAVL<T>(data);
+    }
+
+    balanceFixup(s);
     return true;
 }
 
 template<typename T>
 bool AVL<T>::remove(const T &data) {
-    return false;
+    if(!this->root){ // Empty tree case
+        return false;
+    }
+    std::stack<NodeAVL<T> *> s;
+    NodeAVL<T> *cur = static_cast<NodeAVL<T> *>(this->root);
+    while(cur && cur->data != data){
+        s.push(cur);
+        if(data > cur->data){
+            cur = static_cast<NodeAVL<T> *>(cur->right);
+        }else{
+            cur = static_cast<NodeAVL<T> *>(cur->left);
+        }
+    }
+    if(!cur) return false;
+    if(!cur->left && !cur->right){ // CASE 1: Leaf Node
+        if(data > s.top()->data){ // Update parent link to null.
+            s.top()->right = nullptr;
+        }else {
+            s.top()->left  = nullptr;
+        }
+        delete cur;
+        if(this->size == 1){ // root will be deleted only through CASE 1
+            this->root = nullptr;
+        }
+        this->size--;
+        balanceFixup(s);
+        return true;
+    }else if(cur->left && cur->right){ // CASE 2: Both children exist
+        s.push(cur);
+        NodeAVL<T> *pred = static_cast<NodeAVL<T> *>(cur->left);
+        while(pred && pred->right){
+            s.push(pred);
+            pred = static_cast<NodeAVL<T> *>(pred->right);
+        }
+        T temp = std::move(cur->data);
+        cur->data = std::move(pred->data);
+        pred->data = std::move(temp); // pred is now the node to be deleted
+        if(s.top()->right == pred){ // connect parent to the only child of the predecessor (left)
+            s.top()->right = pred->left;
+        }else{
+            s.top()->left = pred->left;
+        }
+        delete pred;
+        balanceFixup(s);
+        this->size--;
+        return true;
+    }else{ // CASE 3: Only one child exist
+        // connect parent to the only child of cur
+        if(s.top()->right == cur){
+            s.top()->right = cur->left ? cur->left : cur->right;
+        }else {
+            s.top()->left = cur->left ? cur->left : cur->right;
+        }
+        delete cur;
+        this->size--;
+        balanceFixup(s);
+        return true;
+    }
 }
+
+
 
 
 #endif //BST_AVL_H

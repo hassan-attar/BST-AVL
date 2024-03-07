@@ -21,6 +21,5 @@ std::string NodeAVL<T>::toString() const {
     }else if(this->right){
         bf = (static_cast<const NodeAVL<T> *>(this->right)->height + 1);
     }
-     static_cast<const NodeAVL<T> *>(this->left)->height;
     return std::string(std::to_string(this->data)).append("(").append(std::to_string(bf)).append(")");
 }
