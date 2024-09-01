@@ -39,6 +39,7 @@ int AVL<T>::getNodeHeight(const Node<T> *node) {
 // Rotations
 template<typename T>
 NodeAVL<T> *AVL<T>::rotateLeft(NodeAVL<T> *x) {
+    std::cout << "**Performing Left Rotation on node " << x->data << "**\n";
     NodeAVL<T> *y = static_cast<NodeAVL<T> *>(x->right);
     x->right = y->left;
     y->left = x;
@@ -49,6 +50,7 @@ NodeAVL<T> *AVL<T>::rotateLeft(NodeAVL<T> *x) {
 }
 template<typename T>
 NodeAVL<T> *AVL<T>::rotateRight(NodeAVL<T> *x) {
+    std::cout << "**Performing Right Rotation on node " << x->data << "**\n";
     NodeAVL<T> *y = static_cast<NodeAVL<T> *>(x->left);
     x->left = y->right;
     y->right = x;
@@ -61,19 +63,23 @@ NodeAVL<T> *AVL<T>::rotateRight(NodeAVL<T> *x) {
 // Imbalances
 template<typename T>
 NodeAVL<T> *AVL<T>::leftLeftImbalance(NodeAVL<T> *x) {
+    std::cout << "@@LL Imbalance Detected@@\n";
     return rotateRight(x);
 }
 template<typename T>
 NodeAVL<T> *AVL<T>::rightRightImbalance(NodeAVL<T> *x) {
+    std::cout << "@@RR Imbalance Detected@@\n";
     return rotateLeft(x);
 }
 template<typename T>
 NodeAVL<T> *AVL<T>::leftRightImbalance(NodeAVL<T> *x) {
+    std::cout << "@@LR Imbalance Detected@@\n";
     x->left = rotateLeft(static_cast<NodeAVL<T> *>(x->left));
     return rotateRight(x);
 }
 template<typename T>
 NodeAVL<T> *AVL<T>::rightLeftImbalance(NodeAVL<T> *x) {
+    std::cout << "@@RL Imbalance Detected@@\n";
     x->right = rotateRight(static_cast<NodeAVL<T> *>(x->right));
     return rotateLeft(x);
 }

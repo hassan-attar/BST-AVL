@@ -30,8 +30,8 @@ void BST<T>::swap(std::pair<ParentNode *, CurrentNode *> &p1, std::pair<ParentNo
 }
 
 template<typename T>
-void BST<T>::shuffleRandomized(int *arr, int size){
-    int temp;
+void BST<T>::shuffleRandomized(T *arr, int size){
+    T temp;
     std::srand(time(nullptr));
     for(int i = 0, j; i < size; i++){
         temp = arr[i];
@@ -401,14 +401,15 @@ template<typename T>
 BST<T>::BST() :root{nullptr}, size{0}{}
 
 template<typename T>
-BST<T>::BST(std::initializer_list<T> &list): BST() {
-    int *indexes = new int[list.size()];
+BST<T>::BST(const std::initializer_list<T> &list): BST() {
+    T **buffer = new T*[list.size()];
+    std::for_each(list.begin(), list.end(), [i = 0, &buffer](T &data) mutable {
+        buffer[i] = &data;
+        i++;
+    });
+//    shuffleRandomized(buffer, list.size());
     for(int i = 0 ; i < list.size(); i++){
-        indexes[i] = i;
-    }
-    shuffleRandomized(indexes, list.size());
-    for(int i = 0 ; i < list.size(); i++){
-        insert(list[indexes[i]]);
+        insert(*buffer[i]);
     }
 }
 

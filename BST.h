@@ -20,7 +20,7 @@ protected:
     // ########## Helpers ##########
     // High-Level Helpers
     void swap(std::pair<ParentNode *, CurrentNode *> &p1, std::pair<ParentNode *, CurrentNode *> &p2);
-    void shuffleRandomized(int *arr, int size);
+    void shuffleRandomized(T *arr, int size);
     std::pair<ParentNode *, CurrentNode *> findParent(const T& data) const;
     std::pair<ParentNode *, CurrentNode *> findBottomDownInOrderSuccessor(Node<T>* node) const;
     std::pair<ParentNode *, CurrentNode *> findBottomDownInOrderPredecessor(Node<T>* node) const;
@@ -76,7 +76,7 @@ public:
     const reverse_iterator rend() const;
     // ########## Constructor, Destructor, Copy/Move Semantics ##########
     BST();
-    BST(std::initializer_list<T> &list);
+    BST(const std::initializer_list<T> &list);
     BST(const T*, int size);
 
 
@@ -112,6 +112,37 @@ public:
     void inOrderRecursive(const Node<T> *node, const std::function<void(const Node<T> *node)> &lambda) const;
     void preOrderRecursive(const Node<T> *node, const std::function<void(const Node<T>* node)> &lambda) const;
     void postOrderRecursive(const Node<T> *node, const std::function<void(const Node<T>* node)> &lambda) const;
+
+
+    // DELETE LATER
+    int singleParent(){
+        return singleParent(root);
+    }
+    int singleParent(Node<T> *node){
+        if(node){
+            int left = singleParent(node->left);
+            int right = singleParent(node->right);
+            if((!node->left) ^ (!node->right)){
+                return left + right + 1;
+            }
+            return right + left;
+        }
+        return 0;
+    }
+    int sumAtLevelK(int k){
+        return sumAtLevelK(root, k, 0);
+    }
+    int sumAtLevelK(Node<T> *node, int k, int curLevel){
+        if(node){
+            int left = sumAtLevelK(node->left, k, curLevel + 1);
+            int right = sumAtLevelK(node->right, k, curLevel + 1);
+            if(k == curLevel){
+                return left + right + node->data;
+            }
+            return left + right;
+        }
+        return 0;
+    }
 };
 
 #include "BST.tpp"

@@ -16,7 +16,7 @@ public:
     NodeAVL(const T &_data);
     NodeAVL(const T &_data, NodeAVL<T> *_left, NodeAVL<T> *_right);
 
-    virtual std::string toString() const;
+    virtual std::string toString() const override;
 };
 
 template<typename T>
