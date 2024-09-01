@@ -1,3 +1,35 @@
+
+# Project Overview
+
+This project features implementations of Binary Search Trees (BST) and AVL Trees in C++.
+
+>**Check out the sample runs at the end of the file**
+
+### **Binary Search Tree (BST)**
+
+The `BST` class provides a foundational implementation of a binary search tree, supporting operations such as insertion, deletion, and search. Key functionalities include:
+
+- **Insertion and Removal**: Methods to insert and remove nodes while maintaining the binary search tree properties.
+- **Traversal**: Provides various traversal methods, including Morris traversal for O(n) time and O(1) space complexity, as well as stack-based traversal methods.
+- **Height and Size Calculations**: Methods to compute the height and size of the tree.
+- **Iterators**: Implements forward and reverse iterators to support traversal in different orders.
+
+### **AVL Tree**
+
+The `AVL` class extends the `BST` class to provide a self-balancing binary search tree. The AVL tree ensures that the height of the tree remains balanced, which guarantees O(log n) time complexity for insertions and deletions. Key features include:
+
+- **Rotations**: Implements left and right rotations to maintain tree balance after insertions and deletions.
+- **Balancing**: Utilizes balance factors and rotations to fix imbalances and maintain AVL tree properties.
+- **Imbalance Handling**: Supports handling of left-left, right-right, left-right, and right-left imbalances.
+
+### **Design Highlights**
+
+- **Modularity**: The design separates BST and AVL tree functionalities, allowing for clean extensions and modifications.
+- **Efficiency**: Emphasizes efficient operations with considerations for space and time complexity.
+- **Iterators and Traversal**: Provides flexible tree traversal options through iterators and various traversal techniques.
+
+This project is ideal for understanding fundamental and advanced tree data structures and their applications in maintaining balanced search performance.
+
 # AVL Tree Sample Run (Height Balancing)
 <pre>
 > Empty AVL tree created. 
